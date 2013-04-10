@@ -1,0 +1,25 @@
+# Group Cast
+
+## Overview
+
+presenter-2.x is the repository for the Samsung Group Cast project.
+
+The project contains the following maintained branches:
+- master: legacy Group Cast version that shipped with AllShare Play
+- pre-1.5: Group Cast 1.5
+- 1.7: Group Cast 1.7
+
+The other branches are unmaintained.
+
+## Working on the Project
+
+Git concepts not explained here - please use Google or http://help.github.com for that.
+
+1. Fork the presenter-2.x repository to your personal account, and then clone the repository to your development environment
+2. Patches should be worked on in your local environment and pushed to your personal repository
+3. Patches are only submitted for identified issues (https://github.com/BurningChrome/presenter-2.x/issues)
+4. All patches should reference the issue number in the commit message (example issue: https://github.com/BurningChrome/presenter-2.x/issues/1792, example patch: https://github.com/BurningChrome/presenter-2.x/commit/ae60f8c9228045bfe0faab09ca29b018df34484a)
+5. Before submitting a patch, you should also merge in the latest updates from BurningChrome/<branch>
+6. Push your patch to your personal repository
+7. Submit a pull request from your repository/<branch> to BurningChrome/<branch>
+8. Someone will review and merge/reject the patch
