@@ -9,12 +9,12 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 
-import com.kss.airhockey.R;
 import com.kss.airhockey.Balls.Ball;
 
 import java.util.Iterator;
@@ -28,6 +28,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
         private int mFramerate;
         SurfaceHolder mMySurfaceholder;
         MySurfaceView mMySurfaceView;
+        private boolean mFlag = false;
 
         public ViewThread(MySurfaceView view, SurfaceHolder holder) {
             this(view, holder, 33);
@@ -41,7 +42,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
         @Override
         public void run() {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (mFlag) {
                 Canvas canvas = null;
                 canvas = mMySurfaceholder.lockCanvas();
 
@@ -53,7 +54,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
                 } catch (Exception e) {
 
                 } finally {
-                    if (mMySurfaceholder != null) {
+                    if (canvas != null) {
                         mMySurfaceholder.unlockCanvasAndPost(canvas);
                     }
                 }
@@ -63,6 +64,15 @@ public class MySurfaceView extends SurfaceView implements Callback {
         public int getFramerate() {
             return mFramerate;
         }
+
+        public void setFlag(boolean flag) {
+            mFlag = flag;
+        }
+
+        public boolean getFlag() {
+            return mFlag;
+        }
+
     }
 
 
@@ -107,14 +117,17 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        if (myViewThread == null) {
+        if (myViewThread == null || myViewThread.isAlive()) {
             return;
         }
+
         if (mGoalVector.size() == 0) {
             Ball goal = new Ball(360.0f, 800.0f, R.drawable.goal);
             mBallsVector.add(goal);
             mGoalVector.add(goal);
         }
+
+        myViewThread.setFlag(true);
         myViewThread.start();
     }
 
@@ -128,7 +141,18 @@ public class MySurfaceView extends SurfaceView implements Callback {
         if (myViewThread == null) {
             return;
         }
-        myViewThread.interrupt();
+
+        boolean retry = true;
+        myViewThread.setFlag(false);
+        while (retry) {
+            try {
+                myViewThread.join();
+                retry = false;
+            } catch (Exception e) {
+                Log.d(getClass().getName(), "Error occurred while surfaceview is destroying : "
+                        + e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -185,7 +209,11 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
     @Override
     protected void onDraw(Canvas canvas) {
+
         synchronized (mBallsVector) {
+            if (!myViewThread.getFlag()) {
+                return;
+            }
             Long start = System.currentTimeMillis();
 
             canvas.drawPaint(paintForCanvasClaening);
@@ -193,7 +221,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
             // summit
             Iterator<Ball> it = getSummitedIterator();
             Ball p = null;
-            while (it.hasNext()) {
+            while (it.hasNext() && myViewThread.getFlag()) {
                 p = it.next();
                 Bitmap image;
                 switch (p.getResourceID()) {
