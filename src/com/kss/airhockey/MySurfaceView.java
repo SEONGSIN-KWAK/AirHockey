@@ -18,6 +18,7 @@ import android.view.SurfaceView;
 import com.kss.airhockey.Balls.Ball;
 
 import java.util.Iterator;
+import java.util.Vector;
 
 
 public class MySurfaceView extends SurfaceView implements Callback {
@@ -87,6 +88,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
     private Paint paintForText;
     private Paint paintForCanvasClaening;
 
+    private Vector<Bitmap> mLoadedResource;
 
     int pointX;
     int pointY;
@@ -113,6 +115,13 @@ public class MySurfaceView extends SurfaceView implements Callback {
         mSummitVector = new Balls(null);
 
 
+        // Loading resources
+        mLoadedResource = new Vector<Bitmap>();
+        mLoadedResource.add(bitmapBall);
+        int j = (int)(DURATION_FOR_ANIMATION / myViewThread.getFramerate());
+        for (int i = 1; i < j; i++) {
+            mLoadedResource.add(getResizedBitmapImage(bitmapBall, i, j));
+        }
     }
 
     @Override
@@ -242,7 +251,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
                         int currentFps = p.getCurrentFrmae();
                         currentFps++;
                         p.setCurrentFrmae(currentFps);
-                        image = getResizedBitmapImage(image, p);
+                        image = mLoadedResource.get(currentFps);// getResizedBitmapImage(image, p);
                     } else {
                         mBallsVector.remove(p);
                         continue;
@@ -306,4 +315,35 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
         return rotateBitmap;
     }
+
+    public Bitmap getResizedBitmapImage(Bitmap source, int currentFrame, int targetFrame) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+
+        float ration = (float)currentFrame / (float)targetFrame;
+
+        float ratioWidth = width - (ration * width);
+        float ratioHeight = height - (ration * height);
+
+        if (ratioWidth < 1 || ratioHeight < 1) {
+            ratioWidth = 1;
+            ratioHeight = 1;
+        }
+        Bitmap bmp = Bitmap.createScaledBitmap(source, (int)ratioWidth, (int)ratioHeight, true);
+
+
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(3.0f * ration * 360f);
+
+
+
+        Bitmap rotateBitmap =
+                Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
+
+
+
+        return rotateBitmap;
+    }
+
 }
