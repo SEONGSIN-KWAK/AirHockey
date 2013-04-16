@@ -22,8 +22,8 @@ import java.util.Vector;
 
 
 public class MySurfaceView extends SurfaceView implements Callback {
+    private static final String TAG = MySurfaceView.class.getName();
     public static boolean DEBUG_MODE = true;
-
 
     private class ViewThread extends Thread {
         private int mFramerate;
@@ -88,10 +88,17 @@ public class MySurfaceView extends SurfaceView implements Callback {
     private Paint paintForText;
     private Paint paintForCanvasClaening;
 
+    Bitmap mBitmapBall = new BitmapFactory().decodeResource(getResources(), R.drawable.ball);
+    Bitmap mBitmapGoal = new BitmapFactory().decodeResource(getResources(), R.drawable.goal);
+
     private Vector<Bitmap> mLoadedResource;
 
     int pointX;
     int pointY;
+
+    PhysicsEngine mPhysicsEngine;
+
+
 
     public MySurfaceView(Context context) {
         super(context);
@@ -101,10 +108,8 @@ public class MySurfaceView extends SurfaceView implements Callback {
         myViewThread = new ViewThread(this, holder, 5);
 
         // Vector Setting
-        Bitmap bitmapBall = new BitmapFactory().decodeResource(getResources(), R.drawable.ball);
-        mBallsVector = new Balls(bitmapBall);
-        Bitmap bitmapGoal = new BitmapFactory().decodeResource(getResources(), R.drawable.goal);
-        mGoalVector = new Balls(bitmapGoal, R.drawable.goal);
+        mBallsVector = new Balls(mBitmapBall);
+        mGoalVector = new Balls(mBitmapGoal, R.drawable.goal);
 
         paintForText = new Paint();
         paintForText.setTextSize(30);
@@ -117,11 +122,14 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
         // Loading resources
         mLoadedResource = new Vector<Bitmap>();
-        mLoadedResource.add(bitmapBall);
+        mLoadedResource.add(mBitmapBall);
         int j = (int)(DURATION_FOR_ANIMATION / myViewThread.getFramerate());
         for (int i = 1; i < j; i++) {
-            mLoadedResource.add(getResizedBitmapImage(bitmapBall, i, j));
+            mLoadedResource.add(getResizedBitmapImage(mBitmapBall, i, j));
         }
+
+
+
     }
 
     @Override
@@ -131,10 +139,16 @@ public class MySurfaceView extends SurfaceView implements Callback {
         }
 
         if (mGoalVector.size() == 0) {
-            Ball goal = new Ball(360.0f, 800.0f, R.drawable.goal);
+            Ball goal = new Ball(360.0f, 800.0f, mBitmapGoal);
+            goal.setMass(0.0f);
             mBallsVector.add(goal);
             mGoalVector.add(goal);
         }
+
+        // PhysicsEngine
+        mPhysicsEngine =
+                new PhysicsEngine(getHolder().getSurfaceFrame().width(),
+                        getHolder().getSurfaceFrame().height(), myViewThread.getFramerate());
 
         myViewThread.setFlag(true);
         myViewThread.start();
@@ -178,20 +192,22 @@ public class MySurfaceView extends SurfaceView implements Callback {
                     mBallsVector.add(buff);
                     return true;
                 }
-                mBallsVector.add(new Ball(event.getX(), event.getY()));
+                mBallsVector.add(new Ball(event.getX(), event.getY(), mBitmapBall));
                 return true;
 
             case MotionEvent.ACTION_MOVE:
                 buff = mBallsVector.remove(mBallsVector.size() - 1);
                 buff.setX(event.getX());
                 buff.setY(event.getY());
+                buff.setPicked(true);
                 mBallsVector.add(buff);
                 return true;
 
             case MotionEvent.ACTION_UP:
 
                 buff = mBallsVector.lastElement();
-                if (buff.getResourceID() == R.drawable.goal) {
+                buff.setPicked(false);
+                if (buff.getBitmap() == mBitmapGoal) {
                     return true;
                 }
 
@@ -232,20 +248,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
             Ball p = null;
             while (it.hasNext() && myViewThread.getFlag()) {
                 p = it.next();
-                Bitmap image;
-                switch (p.getResourceID()) {
-                    case R.drawable.ball:
-                        image = mBallsVector.getBitmap();
-                        break;
-
-                    case R.drawable.goal:
-                        image = mGoalVector.getBitmap();
-                        break;
-
-                    default:
-                        image = mBallsVector.getBitmap();
-                        break;
-                }
+                Bitmap image = p.getBitmap();
                 if (p.isRemoving()) {
                     if (p.getCurrentFrmae() < p.getTargetFrmae()) {
                         int currentFps = p.getCurrentFrmae();
@@ -256,6 +259,9 @@ public class MySurfaceView extends SurfaceView implements Callback {
                         mBallsVector.remove(p);
                         continue;
                     }
+                }
+                if (!p.isPicked()) {
+                    mPhysicsEngine.Dynamic2D(p);
                 }
                 canvas.drawBitmap(image, p.getX() - (image.getWidth() / 2), p.getY()
                         - (image.getHeight() / 2), null);
@@ -330,8 +336,6 @@ public class MySurfaceView extends SurfaceView implements Callback {
             ratioHeight = 1;
         }
         Bitmap bmp = Bitmap.createScaledBitmap(source, (int)ratioWidth, (int)ratioHeight, true);
-
-
 
         Matrix matrix = new Matrix();
         matrix.postRotate(3.0f * ration * 360f);

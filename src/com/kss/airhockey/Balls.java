@@ -12,23 +12,33 @@ import java.util.Vector;
 
 public class Balls extends Vector<Ball> {
     /***********************************************************************/
-    public static class Ball {
+    public static class Ball extends Object {
+
+
         private float mX;
         private float mY;
         private int mResourceID;
         private Bitmap mBitmap;
         private int mCurrentFrmae = 0;
         private int mTargetFrmae = 0;
+
         private boolean mIsRemoving = false;
+        private boolean mIsPicked = false;
+
+        // Member for Phyiscs
+        private float mVelocity = 0.0F;
+        private float mDirection = 0.0F;
+        private float mMass = 1.0F;
 
         public Ball(float x, float y) {
-            this(x, y, 0);
+            this(x, y, null);
         }
 
-        public Ball(float x, float y, int resourceID) {
+        public Ball(float x, float y, Bitmap bitmap) {
             mX = x;
             mY = y;
-            mResourceID = resourceID;
+            mBitmap = bitmap;
+            mDirection = 3.14159F;
         }
 
         public float getX() {
@@ -75,6 +85,55 @@ public class Balls extends Vector<Ball> {
             return this.mIsRemoving;
         }
 
+        public float getVelocity() {
+            return mVelocity;
+        }
+
+        public void setVelocity(float mVelocity) {
+            this.mVelocity = mVelocity;
+        }
+
+        public float getDirection() {
+            return mDirection;
+        }
+
+        public void setDirection(float mDirection) {
+            this.mDirection = mDirection;
+        }
+
+        public float getMass() {
+            return mMass;
+        }
+
+        public void setMass(float mMass) {
+            this.mMass = mMass;
+        }
+
+        public boolean isPicked() {
+            return mIsPicked;
+        }
+
+        public void setPicked(boolean status) {
+            mIsPicked = status;
+        }
+
+        public int getWidth() {
+            if (mBitmap == null) {
+                return 0;
+            }
+            return mBitmap.getWidth();
+        }
+
+        public int getHeight() {
+            if (mBitmap == null) {
+                return 0;
+            }
+            return mBitmap.getHeight();
+        }
+
+        public Bitmap getBitmap() {
+            return mBitmap;
+        }
     }
 
     /***********************************************************************/
