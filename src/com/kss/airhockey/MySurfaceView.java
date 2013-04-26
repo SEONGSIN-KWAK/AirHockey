@@ -147,8 +147,8 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
         // PhysicsEngine
         mPhysicsEngine =
-                new PhysicsEngine(getHolder().getSurfaceFrame().width(),
-                        getHolder().getSurfaceFrame().height(), myViewThread.getFramerate());
+                new PhysicsEngine(0.0f, (float)getHolder().getSurfaceFrame().width(), 0.0f,
+                        (float)getHolder().getSurfaceFrame().height(), myViewThread.getFramerate());
 
         myViewThread.setFlag(true);
         myViewThread.start();
