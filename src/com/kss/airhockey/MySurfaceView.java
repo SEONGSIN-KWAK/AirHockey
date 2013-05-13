@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.util.Log;
@@ -127,9 +128,6 @@ public class MySurfaceView extends SurfaceView implements Callback {
         for (int i = 1; i < j; i++) {
             mLoadedResource.add(getResizedBitmapImage(mBitmapBall, i, j));
         }
-
-
-
     }
 
     @Override
@@ -147,8 +145,9 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
         // PhysicsEngine
         mPhysicsEngine =
-                new PhysicsEngine(0.0f, (float)getHolder().getSurfaceFrame().width(), 0.0f,
-                        (float)getHolder().getSurfaceFrame().height(), myViewThread.getFramerate());
+                new PhysicsEngine(0.0f, (float)getHolder().getSurfaceFrame().height(),
+                        (float)getHolder().getSurfaceFrame().width(), 0.0f,
+                        myViewThread.getFramerate());
 
         myViewThread.setFlag(true);
         myViewThread.start();
@@ -180,25 +179,27 @@ public class MySurfaceView extends SurfaceView implements Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        PointF point = PhysicsEngine.convertCanvas2Engine(event.getX(), event.getY());
+
         Ball buff;
         int index;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                index = mBallsVector.getIndexIfContained(event.getX(), event.getY());
+                index = mBallsVector.getIndexIfContained(point.x, point.y);
                 if (index != Balls.NOT_CONTAINED) {
                     buff = mBallsVector.remove(index);
-                    buff.setX(event.getX());
-                    buff.setY(event.getY());
+                    buff.setX(point.x);
+                    buff.setY(point.y);
                     mBallsVector.add(buff);
                     return true;
                 }
-                mBallsVector.add(new Ball(event.getX(), event.getY(), mBitmapBall));
+                mBallsVector.add(new Ball(point.x, point.y, mBitmapBall));
                 return true;
 
             case MotionEvent.ACTION_MOVE:
                 buff = mBallsVector.remove(mBallsVector.size() - 1);
-                buff.setX(event.getX());
-                buff.setY(event.getY());
+                buff.setX(point.x);
+                buff.setY(point.y);
                 buff.setPicked(true);
                 mBallsVector.add(buff);
                 return true;
@@ -211,7 +212,7 @@ public class MySurfaceView extends SurfaceView implements Callback {
                     return true;
                 }
 
-                index = mGoalVector.getIndexIfContained(buff.getX(), buff.getY());
+                index = mGoalVector.getIndexIfContained(point.x, point.y);
                 if (index != Balls.NOT_CONTAINED) {
                     if (!buff.isRemoving()) {
                         buff.setTargetFrmae((int)(DURATION_FOR_ANIMATION / myViewThread.getFramerate()));
@@ -263,7 +264,8 @@ public class MySurfaceView extends SurfaceView implements Callback {
                 if (!p.isPicked()) {
                     mPhysicsEngine.Dynamic2D(p);
                 }
-                canvas.drawBitmap(image, p.getX() - (image.getWidth() / 2), p.getY()
+                PointF canvansPoint = PhysicsEngine.convertEngine2Canvas(p.getX(), p.getY());
+                canvas.drawBitmap(image, canvansPoint.x - (image.getWidth() / 2), canvansPoint.y
                         - (image.getHeight() / 2), null);
             }
 

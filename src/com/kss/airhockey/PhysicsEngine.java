@@ -10,14 +10,22 @@ import com.kss.airhockey.Balls.Ball;
 public class PhysicsEngine {
     public static final String TAG = PhysicsEngine.class.getName();
     public static final float G = 9.80665f;
+    private static RectF mCoordination;
 
     private int mFrame = 33;
-    private RectF mCoordination;
 
-    // public static final float getGravityAcceloration(){
-    // float direction =
-    // return
-    // }
+
+    public static PointF convertCanvas2Engine(float x, float y) {
+        PointF pointF = new PointF(x - mCoordination.left, y - mCoordination.bottom);
+        return pointF;
+    }
+
+    public static PointF convertEngine2Canvas(float x, float y) {
+        PointF pointF = new PointF(x + mCoordination.left, y + mCoordination.bottom);
+        return pointF;
+    }
+
+
 
     public PhysicsEngine(float left, float top, float right, float bottoom, int frame) {
         this(new RectF(left, top, right, bottoom), frame);
@@ -59,7 +67,7 @@ public class PhysicsEngine {
         float v = b.getMass() * (G / mFrame) + b.getVelocity();
         float y = b.getY() + v;
 
-        float height = getCoordination().height();
+        float height = Math.abs(getCoordination().height());
 
         b.setY(y > height - (b.getHeight() / 2) ? height - (b.getHeight() / 2) : y);
         b.setVelocity(y > height - (b.getHeight() / 2) ? 0 : v);
